@@ -1,0 +1,10 @@
+[heartbeat]
+enabled = true
+interval = 10
+
+[auth]
+access_token = ""
+
+[dummy]
+self_id = "bot"
+user_id = "user"
