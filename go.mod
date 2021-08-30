@@ -3,7 +3,7 @@ module onebot-dummy
 go 1.16
 
 require (
-	github.com/botuniverse/go-libonebot v0.0.0-00010101000000-000000000000
+	github.com/botuniverse/go-libonebot v0.0.0-20210830060241-c321380e42e5
 	github.com/sirupsen/logrus v1.8.1
 )
 
