@@ -85,7 +85,7 @@ func main() {
 		})
 	})
 	mux.HandleFunc(libob.ActionSendMessage, func(w libob.ResponseWriter, r *libob.Request) {
-		p := libob.NewParamGetter(r.Params, w)
+		p := libob.NewParamGetter(w, r)
 		userID, ok := p.GetString("user_id")
 		if !ok {
 			return
