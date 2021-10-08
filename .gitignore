@@ -18,4 +18,5 @@
 
 # --- Project ---
 config.toml
+log.txt
 *.log

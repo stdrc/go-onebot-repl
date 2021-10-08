@@ -6,10 +6,17 @@ import (
 	"os"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	libob "github.com/botuniverse/go-libonebot"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+)
+
+const (
+	Name     = "Go OneBot REPL"
+	Platform = "repl"
+	Version  = "0.0.0"
 )
 
 type OneBotREPL struct {
@@ -32,9 +39,6 @@ const defaultConfigString = `
 [heartbeat]
 enabled = true
 interval = 10
-
-[auth]
-access_token = ""
 
 [repl]
 self_id = "bot"
@@ -64,7 +68,7 @@ func main() {
 
 	// 创建 OneBot 实例
 	ob := &OneBotREPL{
-		OneBot:        libob.NewOneBot("repl", &config.OneBot),
+		OneBot:        libob.NewOneBot(Platform, config.REPL.SelfID, &config.OneBot),
 		config:        &config.REPL,
 		lastMessageID: 0,
 	}
@@ -75,21 +79,25 @@ func main() {
 		panic(err)
 	}
 	ob.Logger.SetOutput(logFile)
-	ob.Logger.SetLevel(logrus.InfoLevel)
+	ob.Logger.SetLevel(logrus.DebugLevel)
 
 	// 通过 ActionMux 注册动作处理函数，该 mux 变量可在多个 OneBot 实例复用
 	mux := libob.NewActionMux()
 	// 注册 get_version 动作处理函数
 	mux.HandleFunc(libob.ActionGetVersion, func(w libob.ResponseWriter, r *libob.Request) {
 		// 返回一个映射类型的数据（序列化为 JSON 对象或 MsgPack 映射）
-		w.WriteData(map[string]string{
-			"version": "1.0.0",
+		w.WriteData(map[string]interface{}{
+			"name":           Name,
+			"platform":       Platform,
+			"version":        Version,
+			"onebot_version": libob.OneBotVersion,
 		})
 	})
 	// 注册 get_self_id 动作处理函数
 	mux.HandleFunc(libob.ActionGetSelfInfo, func(w libob.ResponseWriter, r *libob.Request) {
 		w.WriteData(map[string]interface{}{
-			"user_id": ob.config.SelfID, // 返回配置中指定的 self_id
+			"user_id":  ob.config.SelfID, // 返回配置中指定的 self_id
+			"nickname": ob.config.SelfID,
 		})
 	})
 	// 注册 send_message 动作处理函数
@@ -110,9 +118,10 @@ func main() {
 			return
 		}
 		fmt.Println(msg.ExtractText()) // 提取消息中的纯文本并打印在控制台
-		// 返回消息 ID
+		// 返回消息 ID 和消息发送时间
 		w.WriteData(map[string]interface{}{
 			"message_id": fmt.Sprint(atomic.AddUint64(&ob.lastMessageID, 1)),
+			"time":       time.Now().Unix(),
 		})
 	})
 	// 注册 repl_test 扩展动作处理函数
@@ -134,16 +143,12 @@ func main() {
 			break
 		}
 		// 构造 OneBot 私聊消息事件并通过 OneBot 对象推送到机器人业务端
-		go ob.Push(&libob.PrivateMessageEvent{
-			MessageEvent: libob.MessageEvent{
-				Event: libob.Event{
-					SelfID:     ob.config.SelfID,
-					Type:       libob.EventTypeMessage,
-					DetailType: "private",
-				},
-				Message: libob.Message{libob.TextSegment(text)},
-			},
-			UserID: ob.config.UserID,
-		})
+		event := libob.MakePrivateMessageEvent(
+			time.Now(),
+			fmt.Sprint(atomic.AddUint64(&ob.lastMessageID, 1)),
+			libob.Message{libob.TextSegment(text)},
+			ob.config.UserID,
+		)
+		go ob.Push(&event)
 	}
 }
