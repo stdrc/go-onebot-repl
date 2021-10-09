@@ -93,6 +93,13 @@ func main() {
 			"onebot_version": libob.OneBotVersion,
 		})
 	})
+	// 注册 get_status 动作处理函数
+	mux.HandleFunc(libob.ActionGetStatus, func(w libob.ResponseWriter, r *libob.Request) {
+		w.WriteData(map[string]interface{}{
+			"good":   true,
+			"online": true,
+		})
+	})
 	// 注册 get_self_id 动作处理函数
 	mux.HandleFunc(libob.ActionGetSelfInfo, func(w libob.ResponseWriter, r *libob.Request) {
 		w.WriteData(map[string]interface{}{
@@ -124,13 +131,13 @@ func main() {
 			"time":       time.Now().Unix(),
 		})
 	})
-	// 注册 repl_test 扩展动作处理函数
-	mux.HandleFunc("repl_test", func(w libob.ResponseWriter, r *libob.Request) {
+	// 注册 repl.some_test_action 扩展动作处理函数
+	mux.HandleFunc("repl.some_test_action", func(w libob.ResponseWriter, r *libob.Request) {
 		w.WriteData("It works!") // 返回一个字符串
 	})
 
-	ob.Handle(mux)
-	go ob.Run() // 启动 OneBot 实例
+	ob.Handle(mux) // 注册 mux 为动作请求处理器
+	go ob.Run()    // 启动 OneBot 实例
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("请开始对话 (输入 exit 退出):")
@@ -147,6 +154,7 @@ func main() {
 			time.Now(),
 			fmt.Sprint(atomic.AddUint64(&ob.lastMessageID, 1)),
 			libob.Message{libob.TextSegment(text)},
+			text,
 			ob.config.UserID,
 		)
 		go ob.Push(&event)
