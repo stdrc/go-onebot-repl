@@ -38,7 +38,7 @@ type REPLConfig struct {
 const defaultConfigString = `
 [heartbeat]
 enabled = true
-interval = 10
+interval = 10000
 
 [repl]
 self_id = "bot"
