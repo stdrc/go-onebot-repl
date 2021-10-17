@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	Name     = "Go OneBot REPL"
+	Impl     = "go_onebot_repl"
 	Platform = "repl"
 	Version  = "0.0.0"
 )
@@ -68,7 +68,7 @@ func main() {
 
 	// 创建 OneBot 实例
 	ob := &OneBotREPL{
-		OneBot:        libob.NewOneBot(Platform, config.REPL.SelfID, &config.OneBot),
+		OneBot:        libob.NewOneBot(Impl, Platform, config.REPL.SelfID, &config.OneBot),
 		config:        &config.REPL,
 		lastMessageID: 0,
 	}
@@ -87,7 +87,7 @@ func main() {
 	mux.HandleFunc(libob.ActionGetVersion, func(w libob.ResponseWriter, r *libob.Request) {
 		// 返回一个映射类型的数据（序列化为 JSON 对象或 MsgPack 映射）
 		w.WriteData(map[string]interface{}{
-			"name":           Name,
+			"impl":           Impl,
 			"platform":       Platform,
 			"version":        Version,
 			"onebot_version": libob.OneBotVersion,
