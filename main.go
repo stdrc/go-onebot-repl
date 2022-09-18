@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	Impl     = "go_onebot_repl"
+	Impl     = "go-onebot-repl"
 	Platform = "repl"
 	Version  = "0.0.0"
 )
@@ -68,7 +68,10 @@ func main() {
 
 	// 创建 OneBot 实例
 	ob := &OneBotREPL{
-		OneBot:        libob.NewOneBot(Impl, Platform, config.REPL.SelfID, &config.OneBot),
+		OneBot: libob.NewOneBot(Impl, &libob.Self{
+			Platform: Platform,
+			UserID:   config.REPL.SelfID,
+		}, &config.OneBot),
 		config:        &config.REPL,
 		lastMessageID: 0,
 	}
@@ -88,7 +91,6 @@ func main() {
 		// 返回一个映射类型的数据（序列化为 JSON 对象或 MsgPack 映射）
 		w.WriteData(map[string]interface{}{
 			"impl":           Impl,
-			"platform":       Platform,
 			"version":        Version,
 			"onebot_version": libob.OneBotVersion,
 		})
@@ -96,15 +98,21 @@ func main() {
 	// 注册 get_status 动作处理函数
 	mux.HandleFunc(libob.ActionGetStatus, func(w libob.ResponseWriter, r *libob.Request) {
 		w.WriteData(map[string]interface{}{
-			"good":   true,
-			"online": true,
+			"good": true,
+			"bots": []interface{}{
+				map[string]interface{}{
+					"self":   ob.Self,
+					"online": true,
+				},
+			},
 		})
 	})
 	// 注册 get_self_id 动作处理函数
 	mux.HandleFunc(libob.ActionGetSelfInfo, func(w libob.ResponseWriter, r *libob.Request) {
 		w.WriteData(map[string]interface{}{
-			"user_id":  ob.config.SelfID, // 返回配置中指定的 self_id
-			"nickname": ob.config.SelfID,
+			"user_id":          ob.config.SelfID, // 返回配置中指定的 self_id
+			"user_name":        ob.config.SelfID,
+			"user_displayname": "",
 		})
 	})
 	// 注册 send_message 动作处理函数
